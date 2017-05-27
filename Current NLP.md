@@ -13,22 +13,23 @@ Unsupervised learning
 
 A. **Syntax**
 1. Morphological segmentation
-    Identify smallest unit with meaning.
-    Free- : Independent meaning
-    Bound- : Dependent meaning
+  - Identify smallest unit with meaning.
+  - Free- : Independent meaning
+  - Bound- : Dependent meaning
 2. Part-of-speech
-    Noun, verb, etc.
+  - Noun, verb, etc.
 3. Parse
-    Syntactic meaning
+  - Syntactic meaning
 4. Sentence/Word Breaking
-    Punctuations
+  - Punctuations
 B. **Semantics**
 1. Lexical semantics
-    Hierachy and relation of morphemes.
+  - Hierachy and relation of morphemes.
 2. Named Entity Recognition (NER)
-    Proper nouns
+  - Proper nouns
 
 ####Useful Areas to look at
+
 *Sentiment analysis
 *Disambiguation (of words)
 *Topic Segmentation
