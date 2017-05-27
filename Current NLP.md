@@ -12,27 +12,33 @@ Unsupervised learning
 ## General Tasks
 
 A. **Syntax**
-1. Morphological segmentation
-  - Identify smallest unit with meaning.
-  - Free- : Independent meaning
-  - Bound- : Dependent meaning
-2. Part-of-speech
-  - Noun, verb, etc.
-3. Parse
-  - Syntactic meaning
-4. Sentence/Word Breaking
-  - Punctuations
+  1. Morphological segmentation
+   - Identify smallest unit with meaning.
+   - Free- : Independent meaning
+   - Bound- : Dependent meaning
+  2. Part-of-speech
+    - Noun, verb, etc.
+  3. Parse
+    - Syntactic meaning
+  4. Sentence/Word Breaking
+    - Punctuations
+  
 B. **Semantics**
-1. Lexical semantics
-  - Hierachy and relation of morphemes.
-2. Named Entity Recognition (NER)
-  - Proper nouns
+  1. Lexical semantics
+    - Hierachy and relation of morphemes.
+  2. Named Entity Recognition (NER)
+    - Proper nouns
 
-####Useful Areas to look at
+#### Useful Areas to look at
 
-*Sentiment analysis
-*Disambiguation (of words)
-*Topic Segmentation
-SVD
+* Sentiment analysis
+* Disambiguation (of words)
+* Topic Segmentation
+General Methods:
+* SVD
+* K-means
+* Method of moments
+Modeling Methods:
+* Latent Dirichlet Allocation
 
 ### Question Answering    
