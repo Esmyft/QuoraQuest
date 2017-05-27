@@ -40,5 +40,37 @@ General Methods:
 * Method of moments
 Modeling Methods:
 * Latent Dirichlet Allocation
+* Bag-of-words 
+  * tf-idf
+  * BM25 family
 
-### Question Answering    
+## Current Quora Model
+
+Random Forest with handcrafted features:
+* Cosine similarity of average word2vec embedding
+* Common topic labels
+* Part-of-speech tags
+ML Techniques:
+* Recurrent Neural Networks (RNNs)
+  * Long Short Term Memory (LSTM)
+* Attention-based approach
+  * Compared pairs of words from the two questions
+
+## Question Answering    
+
+A. Question Analysis
+  1. Question Classification
+    - 
+
+
+
+
+
+
+
+
+
+
+
+
+
