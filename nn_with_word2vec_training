@@ -10,7 +10,9 @@ import tensorflow as tf
 
 with open(r"C:\Users\Owner\Documents\Python Scripts\Kaggle_Quora\training_and_test.pickle",'rb') as f:
     train_x,train_y,test_x,test_y = pickle.load(f)
-    
+
+# Work around to feed binary classification into tensorflow.
+
 for row in range(len(train_y)):
     if train_y[row] == 1:
         train_y[row] = [1,0]
@@ -39,7 +41,6 @@ x = tf.placeholder('float')
 y = tf.placeholder('float')
 
 # Neural Network architecture
-
 
 def neural_network_model(data):
 
@@ -73,6 +74,7 @@ def neural_network_model(data):
 
     return output
 
+# Train neural network
 
 def train_neural_network(x):
 
@@ -80,7 +82,8 @@ def train_neural_network(x):
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
         logits=prediction, labels=y))
     optimizer = tf.train.AdamOptimizer().minimize(cost)
-
+    
+    # Train with minibatch gradient descent with 10 overall runs
     hm_epochs = 10
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
