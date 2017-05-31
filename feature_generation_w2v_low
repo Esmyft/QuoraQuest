@@ -1,109 +1,198 @@
-import numpy as np
 import pandas as pd
-import nltk
-from nltk.corpus import stopwords
-from nltk.stem import SnowballStemmer
+import gensim as gs
 import re
+import numpy as np
 import pickle
 import random
-import tensorflow as tf
+import csv
 
-with open(r"C:\Users\Owner\Documents\Python Scripts\Kaggle_Quora\training_and_test.pickle",'rb') as f:
-    train_x,train_y,test_x,test_y = pickle.load(f)
+# Load pretrained word2vec model
+
+print('Loading word2vec...')
+word2vec_model = gs.models.KeyedVectors.load_word2vec_format(r'C:\Users\Owner\Documents\Python Scripts\Kaggle_Quora\word2vec')
+print('Loaded {}...'.format("word2vec model"))
+
+# Load data set, test set commented out 
+
+print('Loading training and test sets...')
+df_train = pd.read_csv("C:/Users/Owner/Documents/Python Scripts/Kaggle_Quora/raw_data/train.csv", encoding = 'utf8')
+#df_test = pd.read_csv("C:/Users/Owner/Documents/Python Scripts/Kaggle_Quora/raw_data/test.csv", encoding = 'utf8')
+print('Loaded {} question pairs in training set'.format(len(df_train)))
+#print('Loaded {} question pairs in test set'.format(len(df_test)))
+
+df_train_q1 = df_train['question1'].copy()
+df_train_q2 = df_train['question2'].copy()
+#df_test_q1 = df_test['question1'].copy() 
+#df_test_q2 = df_test['question2'].copy()
+print("A sample question looks like: " + df_train_q1[0])
+print("A sample duplicate looks like: " + df_train_q2[0])
+
+# Function for cleaning questions, from kaggle
+
+def text_to_wordlist(text, remove_stopwords=False, stem_words=False):
+    # Clean the text, with the option to remove stopwords and to stem words.
     
-for row in range(len(train_y)):
-    if train_y[row] == 1:
-        train_y[row] = [1,0]
-    else:
-        train_y[row] = [0,1]
-for row in range(len(test_y)):
-    if test_y[row] == 1:
-        test_y[row] = [1,0]
-    else:
-        test_y[row] = [0,1]
-
-
-
-# Define hidden layers
-
-nn_nodes_hl_1 = 500
-nn_nodes_hl_2 = 500
-nn_nodes_hl_3 = 500
-
-# Define classifications and batch size
-n_classes = 2
-batch_size = 100
-
-# Some placeholder Variable to pass into tensorflow
-x = tf.placeholder('float')
-y = tf.placeholder('float')
-
-# Neural Network architecture
-
-
-def neural_network_model(data):
-
-    hidden_1_layer = {'weights': tf.Variable(tf.random_normal(
-        [3, nn_nodes_hl_1])), 'biases': tf.Variable(tf.random_normal([nn_nodes_hl_1]))}
-
-    hidden_2_layer = {'weights': tf.Variable(tf.random_normal(
-        [nn_nodes_hl_1, nn_nodes_hl_2])), 'biases': tf.Variable(tf.random_normal([nn_nodes_hl_2]))}
-
-    hidden_3_layer = {'weights': tf.Variable(tf.random_normal(
-        [nn_nodes_hl_2, nn_nodes_hl_3])), 'biases': tf.Variable(tf.random_normal([nn_nodes_hl_3]))}
-
-    output_layer = {'weights': tf.Variable(tf.random_normal(
-        [nn_nodes_hl_3, n_classes])), 'biases': tf.Variable(tf.random_normal([n_classes]))}
-
-    l1 = tf.add(tf.matmul(data,
-                          hidden_1_layer['weights']), hidden_1_layer['biases'])
-    l1 = tf.nn.relu(l1)
-
-    l2 = tf.add(tf.matmul(l1,
-                          hidden_2_layer['weights']), hidden_2_layer['biases'])
-    l2 = tf.nn.relu(l2)
-
-    l3 = tf.add(tf.matmul(l2,
-                          hidden_3_layer['weights']), hidden_3_layer['biases'])
-    l3 = tf.nn.relu(l3)
-
-    output = tf.matmul(l3, tf.add(
-        output_layer['weights'], output_layer['biases']))
+    # Convert words to lower case and split them
+    if type(text)== float:
+        text = ''
     
 
-    return output
+    text = text.lower().split()
+
+    # Optionally, remove stop wor
+    if remove_stopwords:
+        stops = set(stopwords.words("english"))
+        text = [w for w in text if not w in stops]
+    
+    text = " ".join(text)
+
+    # Clean the text
+    text = re.sub(r"[^A-Za-z0-9^,!.\/'+-=]", " ", text)
+    text = re.sub(r"what's", "what is ", text)
+    text = re.sub(r"\'s", " ", text)
+    text = re.sub(r"\'ve", " have ", text)
+    text = re.sub(r"can't", "cannot ", text)
+    text = re.sub(r"n't", " not ", text)
+    text = re.sub(r"i'm", "i am ", text)
+    text = re.sub(r"\'re", " are ", text)
+    text = re.sub(r"\'d", " would ", text)
+    text = re.sub(r"\'ll", " will ", text)
+    text = re.sub(r",", " ", text)
+    text = re.sub(r"\?", " ", text)
+    text = re.sub(r"\.", " ", text)
+    text = re.sub(r"!", " ! ", text)
+    text = re.sub(r"\/", " ", text)
+    text = re.sub(r"\^", " ^ ", text)
+    text = re.sub(r"\+", " + ", text)
+    text = re.sub(r"\-", " - ", text)
+    text = re.sub(r"\=", " = ", text)
+    text = re.sub(r"'", " ", text)
+    text = re.sub(r"(\d+)(k)", r"\g<1>000", text)
+    text = re.sub(r":", " : ", text)
+    text = re.sub(r" e g ", " eg ", text)
+    text = re.sub(r" b g ", " bg ", text)
+    text = re.sub(r" u s ", " american ", text)
+    text = re.sub(r"\0s", "0", text)
+    text = re.sub(r" 9 11 ", "911", text)
+    text = re.sub(r"e - mail", "email", text)
+    text = re.sub(r"j k", "jk", text)
+    text = re.sub(r"\s{2,}", " ", text)
+
+    
+    # Optionally, shorten words to their stems
+    if stem_words:
+        text = text.split()
+        stemmer = SnowballStemmer('english')
+        stemmed_words = [stemmer.stem(word) for word in text]
+        text = " ".join(stemmed_words)
+    
+    # Return a list of words
+    return(text)
+
+# Clean data sets
+
+print("Processing training questions...")
+df_train_q1 = df_train_q1.apply(text_to_wordlist)
+df_train_q2 = df_train_q2.apply(text_to_wordlist)
+print("Done processing training questions.")
+#print("Processing test questions...")
+#df_test_q1 = df_test_q1.apply(text_to_wordlist)
+#df_test_q2 = df_test_q2.apply(text_to_wordlist)
+#print("Done processing test questions.")
+# Split questions on whitespace 
+
+df_train_q1 = df_train_q1.str.split(' ')
+df_train_q2 = df_train_q2.str.split(' ')
+#df_test_q1 = df_test_q1.str.split(' ')
+#df_test_q2 = df_test_q2.str.split(' ')
+
+# Generate features: 
+#       top 5 similar words' similarity
+#       variance of similarity matrix
+#       most dissimilar words' dissimilarity
+
+def feature_generation(data1, data2):
+
+    print('Calulating similarity matrix...')
+    feature_vector = []
+    words_not_in_corpus = 0 
+    words_not_in_corpus_list =[]
+    for row_index in range(len(data1)):
+        row_features = []
+        if row_index%1000 == 1: 
+            print('Calulating similarity matrix for row {}'.format(row_index))
+        # Let q1 be the rows and q2 be the columns of our similarity matrix
+        n = len(data1[row_index])
+        m = len(data2[row_index])
+        similarity_matrix = np.zeros([n,m])
+
+        for i in range(len(data1[row_index])):
+            for j in range(len(data2[row_index])):
+                
+                try:
+                    similarity_matrix[i,j] = word2vec_model.similarity(r'/en/' + data1[row_index][i],r'/en/' + data2[row_index][j])
+                except KeyError as e:
+                    similarity_matrix[i,j]=0.0001
+                    words_not_in_corpus +=1
+                    words_not_in_corpus_list += [[data1[row_index][i],data1[row_index][j]]]
+
+        # Define features
+        max_similarities = np.amax(similarity_matrix,axis = 1)
+        similarity_count = 0
+        n_largest_sim = 1
+        n = 5
+        while similarity_count < n:
+            if len(max_similarities)>similarity_count:
+                n_largest_sim = n_largest_sim*max_similarities[similarity_count]
+                similarity_count += 1
+            else:
+                break
+        similarity_var = np.var(similarity_matrix)
+        dissimilarity = np.amin(similarity_matrix)
+        row_features.append(n_largest_sim)
+        row_features.append(similarity_var)
+        row_features.append(dissimilarity)
+        feature_vector.append(row_features)
+    print('{} words not in corpus.'.format(words_not_in_corpus))
+    with open(r'C:\Users\Owner\Documents\Python Scripts\Kaggle_Quora\words_not_in_corpus.csv'
+        ,'w') as f:
+        writer = csv.writer(f)
+        writer.writerows(words_not_in_corpus_list)
+
+    return feature_vector
+
+print('Generating train features...')
+train_features = feature_generation(df_train_q1,df_train_q1)
+
+#print('Generating test features...')
+#test_features = feature_generation(df_test_q1,df_test_q2)
+train_labels = pd.Series.tolist(df_train["is_duplicate"])
+
+# Slices features and labels into tensorflow format
+for row in range(len(train_features)):   
+    train_features[row] = [train_features[row], train_labels[row]]
+
+train_data = train_features 
 
 
-def train_neural_network(x):
+def create_test(train_data,test_size=0.1):
+    random.shuffle(train_data)
+    train_data =np.array(train_data)
+    testing_size = int(test_size*len(train_data))
 
-    prediction = neural_network_model(x)
-    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-        logits=prediction, labels=y))
-    optimizer = tf.train.AdamOptimizer().minimize(cost)
+    train_x = list(train_data[:,0][:-testing_size])
+    train_y = list(train_data[:,1][:-testing_size])
+    test_x = list(train_data[:,0][-testing_size:])
+    test_y = list(train_data[:,1][-testing_size:])
 
-    hm_epochs = 10
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-
-        for epoch in range(hm_epochs):
-            epoch_loss = 0
-            i = 0
-            while i < len(train_x):
-                start = i
-                end = i + batch_size
-                batch_x = np.array(train_x[start:end])
-                batch_y = np.array(train_y[start:end])
-                _, c = sess.run([optimizer, cost], feed_dict={
-                                x: batch_x, y: batch_y})
-                epoch_loss += c
-                i += batch_size
-            print('Epoch', epoch, 'completed out of',
-                  hm_epochs, 'loss:', epoch_loss)
-
-        correct = tf.equal(tf.argmax(prediction, 1), tf.argmax(y, 1))
-        accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
-        print('Accuracy:', accuracy.eval(
-            {x: test_x, y: test_y}))
+    return train_x,train_y,test_x,test_y
 
 
-train_neural_network(x)
+if __name__ == '__main__':
+    train_x,train_y,test_x,test_y = create_test(train_data)
+    with open(r'C:\Users\Owner\Documents\Python Scripts\Kaggle_Quora\training_and_test.pickle'
+        ,'wb') as f:
+        pickle.dump([train_x,train_y,test_x,test_y],f)
+
+
+
